@@ -1,3 +1,3 @@
-# solidjs-tailwindcss-template
+# Omni Tic-Tac-Toe
 
-A template for integrating Solid.js with Tailwind.css. Remember to replace this when publishing a project!
+A strategy-chance-based spinoff of the popular game Tic-Tac-Toe!

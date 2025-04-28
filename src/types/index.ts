@@ -1,0 +1,1 @@
+export { Occupant } from "./Occupant";

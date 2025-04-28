@@ -4,10 +4,21 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>Solid.js Tailwind.css Template</title>
+        <title>Omni Tic-Tac-Toe</title>
     </head>
-    <body>
-        <div id="app"></div>
+    <body class="flex flex-col">
+        <header class="flex flex-col gap-4 justify-center items-center h-48">
+            <h1 class="text-4xl font-black">Omni Tic-Tac-Toe</h1>
+            <p>A strategy-chance-based spinoff of the popular game Tic-Tac-Toe!</p>
+        </header>
+
+        <main id="game" class="flex flex-col md:flex-row justify-center py-4 md:px-4 w-full h-full select-none"></main>
+
+        <footer class="flex flex-row gap-6 justify-center mt-8 mb-2 w-full">
+            <p>Created by Zong Yang and Tristan</p>
+            <a class="text-blue-500 hover:underline decoration-2" href="https://github.com/zy-nyp/omni-tic-tac-toe" target="_blank">View Repository</a>
+        </footer>
+
         <script type="module" src="src/index.tsx"></script>
     </body>
 </html>

@@ -1,6 +1,6 @@
 {
-  "name": "solidjs-tailwindcss-template",
-  "description": "A template for integrating Solid.js with Tailwind.css. Remember to replace this when publishing a project!",
+  "name": "omni-tic-tac-toe",
+  "description": "A strategy-chance-based spinoff of the popular game Tic-Tac-Toe!",
   "type": "module",
   "version": "0.0.0",
   "private": true,
