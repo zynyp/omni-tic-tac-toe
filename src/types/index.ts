@@ -1,1 +1,1 @@
-export { Occupant } from "./Occupant";
+export { Tile, TileNames, TileSources } from "./Tile";

@@ -1,2 +1,6 @@
 import Grid from "./Grid";
-export { Grid };
+import Tile from "./Tile";
+
+import Dice from "./Dice";
+
+export { Grid, Tile, Dice };

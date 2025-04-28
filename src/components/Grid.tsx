@@ -1,57 +1,30 @@
-import { createSignal, For } from "solid-js";
-import { Occupant } from "../types";
+import { For, type Signal } from "solid-js";
+import { Howl } from "howler";
 
-export default function Grid() {
-    const [state, setState] = createSignal<Occupant[][]>(Array(5).fill(null).map(() => Array(5).fill(Occupant.None)), { equals: false });
-    function updateState(x: number, y: number) {
-        const newState = state();
-        newState[y][x] = +Object.keys(Occupant)[Math.random() * 4 | 0] as Occupant;
-        
-        setState(newState);
-    }
+import { Tile as TileType } from "../types";
 
-    function getSrc(x: number, y: number): string {
-        const occupant = state()[y][x];
-        switch (occupant) {
-            case Occupant.None: return "";
+import Tile from "./Tile";
 
-            case Occupant.Circle: return "/tiles/circle.svg";
-            case Occupant.Cross: return "/tiles/cross.svg";
+const placeHowler = new Howl({
+    src: "sounds/place.mp3",
+    volume: 0.8
+});
 
-            case Occupant.Defender: return "/tiles/defender.svg";
-        }
-    }
+placeHowler.load();
 
-    function getAlt(x: number, y: number): string {
-        const occupant = state()[y][x];
-        switch (occupant) {
-            case Occupant.None: return "";
-
-            case Occupant.Circle: return "Circle Tile";
-            case Occupant.Cross: return "Cross Tile";
-
-            case Occupant.Defender: return "Defender Tile";
-        }
-    }
+export default function Grid(props: GridProps) {
+    const { tiles, onPlace = () => {} } = props;
 
     return (
-        <div class="w-full h-full justify-items-center content-center">
+        <div class="p-4 w-full h-full justify-items-center content-center">
             <div class="relative w-full h-full max-w-100 max-h-100">
-                <img class="absolute top-0 left-0 pointer-events-none" src="grid.svg" alt="Tile Grid" width={400} draggable="false" role="presentation" aria-hidden="true" />
-                <table class="flex flex-col  justify-center">
+                <img class="absolute top-0 left-0 pointer-events-none" src="images/grid.svg" alt="Tile Grid" width={400} draggable="false" role="presentation" aria-hidden="true" />
+                <table class="flex flex-col justify-center">
                         <For each={Array(5)}>
                             {(_, y) => (
                                 <tr class="flex flex-row">
                                     <For each={Array(5)}>
-                                        {(_, x) => {
-                                            if ((x() === 0 || x() === 4) && (y() === 0 || y() === 4)) return <div class="aspect-square w-full h-full"></div>;
-                                            
-                                            return (
-                                                <button class="aspect-square justify-items-center content-center w-full bg-white" onclick={() => updateState(x(), y())}>
-                                                    {state()[y()][x()] === Occupant.None ? <div class="aspect-square w-full"></div> : <img class="aspect-square" src={getSrc(x(), y())} alt={getAlt(x(), y())} width={64} />}
-                                                </button>
-                                            );
-                                        }}
+                                        {(_, x) => <Tile tile={tiles[y()][x()][0]} isHidden={(x() === 0 || x() === 4) && (y() === 0 || y() === 4)} onclick={() => onPlace(x(), y())} />}
                                     </For>
                                 </tr>
                             )}
@@ -60,4 +33,9 @@ export default function Grid() {
             </div>
         </div>
     );
+}
+
+export interface GridProps {
+    tiles: Signal<TileType>[][];
+    onPlace?: (x: number, y: number) => any;
 }
