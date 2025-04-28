@@ -1,0 +1,15 @@
+{
+    "extends": ["./tsconfig.json"],
+    "include": ["src"],
+    
+    "compilerOptions": {
+		// Modules
+		"paths": { "/*": ["./*", "./public/*"] },
+		
+        // Language and Environment
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js",
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "target": "ES2020",
+    }
+}
