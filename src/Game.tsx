@@ -1,18 +1,8 @@
 import { createMemo, createSignal, For, onCleanup, onMount, type Signal } from "solid-js";
 import { animate } from "animejs";
 
-import { Dice, Grid, GRID_HEIGHT, GRID_WIDTH } from "./components";
+import { Dice, Grid, GRID_HEIGHT, GRID_WIDTH, MAX_TILES, WinScreen } from "./components";
 import { Tile, TileNames, TileSources, type Turn } from "./types";
-
-// TODO: fix sizing and placement issues on mobile (dont use justify-items-center, content-center, etc)
-const MAX_TILES: Record<Tile, number> = {
-    [Tile.None]: 0,
-    
-    [Tile.Circle]: 4,
-    [Tile.Cross]: 4,
-
-    [Tile.Defender]: 2
-};
 
 export default function Game() {
     let info!: HTMLDivElement;
@@ -30,6 +20,16 @@ export default function Game() {
         [Tile.Defender]: createSignal<[number, number][]>([])
     };
 
+    const tileCount = createMemo(() => {
+        const tileCount = {} as Record<Tile, number>;
+        for (const tileType in tiles) {
+            const tile = +tileType as Tile;
+            tileCount[tile] = tiles[tile][0]().length;
+        } 
+        
+        return tileCount;
+    });
+
     const [allowPlacing, setAllowPlacing] = createSignal(false);
     const [selectedTile, setSelectedTile] = createSignal<[number, number] | null>(null);
 
@@ -40,6 +40,9 @@ export default function Game() {
 
     const [credits, setCredits] = createSignal(0);
     const [diceFace, setDiceFace] = createSignal(1);
+
+    const winnerSignal = createSignal(Tile.None);
+    const [winner, setWinner] = winnerSignal;
 
     const [rollDice, setRollDice] = createSignal(false);
     const [diceRollSteps, setDiceRollSteps] = createSignal(0);
@@ -58,6 +61,8 @@ export default function Game() {
 
         return currentTiles;
     });
+
+    const isOnLargeScreen = createMemo(() => (matchMedia("(width < 48rem)").matches && matchMedia("(height >= 48rem)").matches) || (matchMedia("(width >= 48rem)").matches && matchMedia("(height < 48rem)").matches));
 
     const cleanupController = new AbortController();
     onMount(() => {
@@ -93,7 +98,7 @@ export default function Game() {
 
             animate(currentTurnText, {
                 height: {
-                    to: (matchMedia("(width < 48rem)").matches && matchMedia("(height >= 48rem)").matches) || (matchMedia("(width >= 48rem)").matches && matchMedia("(height < 48rem)").matches) ? "2rem" : "1rem",
+                    to: isOnLargeScreen() ? "2rem" : "1.5rem",
                     ease: "outQuad"
                 },
 
@@ -108,6 +113,8 @@ export default function Game() {
             endTurn();
             window.removeEventListener("click", onWindowClick);
         }
+
+        window.addEventListener("resize", () => currentTurnText.style.height = isOnLargeScreen() ? "2rem" : "1.5rem")
     });
 
     onCleanup(() => cleanupController.abort());
@@ -144,7 +151,6 @@ export default function Game() {
 
     function updateTurnActionIdx(turnActionIdx: number) {
         setTurnActionIdx(turnActionIdx);
-        if (turnActionIdx < 0) return;
 
         let currentCredits: number = diceFace();
         for (const { credits } of turnHistory().slice(0, turnActionIdx + 1)) currentCredits += credits;
@@ -176,6 +182,8 @@ export default function Game() {
                 }
             }
 
+            if (tileCount()[tile] >= MAX_TILES[tile]) return;
+
             setCredits(credits() + creditChange);
             if (credits() < 0) {
                 setCredits(0);
@@ -200,12 +208,12 @@ export default function Game() {
 
     return (
         <>
-            <div class="flex flex-col justify-center items-center w-full h-min">
+            <section class="flex flex-col justify-center items-center w-full h-min">
                 <h2 ref={currentTurnText} class="h-0 text-xl md:text-2xl h-md:text-2xl font-bold text-center align-middle opacity-0">It's <img class="inline-block mx-1" src={TileSources[currentTurn()]} alt={TileNames[currentTurn()]} width={30} />'s Turn!</h2>
-                <Grid tiles={currentTiles} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} onPlace={onGridPlace} />
-            </div>
+                <Grid tiles={currentTiles} tileCount={tileCount} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} onPlace={onGridPlace} />
+            </section>
 
-            <div ref={info} class={`flex flex-col justify-end md:justify-center items-center pt-2 md:mr-40 md:w-120 ${hasNotPlayed() ? "gap-4" : "gap-2 md:gap-6 h-mdlg:gap-8"}`}>
+            <section ref={info} class={`flex flex-col justify-end md:justify-center items-center pt-2 md:mr-40 md:w-120 ${hasNotPlayed() ? "gap-4" : "gap-2 md:gap-6 h-mdlg:gap-8"}`}>
                 {
                     hasNotPlayed()
                     ? (
@@ -221,27 +229,29 @@ export default function Game() {
                     )
                     : (
                         <>
-                            <div class="flex flex-row md:order-1 gap-2 justify-center">
-                                <img class={`transition-[margin,_width] duration-200 ${turnActionIdx() > 0 ? "not-hover:m-1 hover:w-11" : "opacity-60"}`} src="images/undo-arrow.svg" alt="Undo" width={36} draggable="false" tabIndex={-1 + +(turnActionIdx() > 0)} role="button" aria-disabled={turnActionIdx() <= 0} onclick={() => updateTurnActionIdx(Math.max(turnActionIdx() - 1, -1))} />
-                                <img class={`transition-[margin,_width] duration-200 ${Math.max(turnActionIdx(), turnHistory().length) < 1 ? "opacity-60" : "not-hover:m-1 hover:w-11"}`} src="images/redo-arrow.svg" alt="Redo" width={36} draggable="false" tabIndex={-(Math.max(turnActionIdx(), turnHistory().length) < 1)} role="button" aria-disabled={Math.max(turnActionIdx(), turnHistory().length) < 1} onclick={() => updateTurnActionIdx(Math.min(turnActionIdx() + 1, turnHistory().length - 1))} />
-                            </div>
+                            <section class="flex flex-row md:order-1 gap-2 justify-center">
+                                <img class={`transition-[margin,_width] duration-200 ${turnActionIdx() >= 0 ? "not-hover:m-1 hover:w-11" : "m-1 opacity-60"}`} src="images/undo-arrow.svg" alt="Undo" width={36} draggable="false" tabIndex={-1 + +(turnActionIdx() > 0)} role="button" aria-disabled={turnActionIdx() <= 0} onclick={() => updateTurnActionIdx(Math.max(turnActionIdx() - 1, -1))} />
+                                <img class={`transition-[margin,_width] duration-200 ${turnActionIdx() < turnHistory().length - 1 ? "not-hover:m-1 hover:w-11" : "m-1 opacity-60"}`} src="images/redo-arrow.svg" alt="Redo" width={36} draggable="false" tabIndex={-(Math.max(turnActionIdx(), turnHistory().length) < 1)} role="button" aria-disabled={Math.max(turnActionIdx(), turnHistory().length) < 1} onclick={() => updateTurnActionIdx(Math.min(turnActionIdx() + 1, turnHistory().length - 1))} />
+                            </section>
                             
                             <div class="flex flex-row gap-18 justify-center items-end">
-                                <div class="flex flex-col justify-center">
+                                <section class="flex flex-col justify-center">
                                     <div class="flex flex-col items-center h-20">
                                         <h3 class="text-xl font-bold">Credits</h3>
                                         <p class="text-lg font-semibold">{rollDice() ? ".".repeat(diceRollSteps()) : credits()}</p>
                                     </div>
 
                                     <button class={`w-40 h-14 text-xl font-bold text-white rounded-full outline-none focus:ring-2 ring-offset-2 hover:brightness-90 transition duration-200 ${rollDice() ? "bg-neutral-500 ring-neutral-500" : "bg-blue-500 ring-blue-500"}`} disabled={rollDice()} tabIndex={-rollDice()} onclick={endTurn} onpointerup={({ target }) => (target as HTMLButtonElement).blur()}>End Turn</button>
-                                </div>
+                                </section>
 
                                 <Dice doRoll={rollDice} onRollStep={() => setDiceRollSteps(diceRollSteps() + 1)} onRollEnd={onDiceRollEnd} />
                             </div>
                         </>
                     )
                 }
-            </div>
+            </section>
+
+            {winner() !== Tile.None && <WinScreen winnerSignal={winnerSignal} />}
         </>
     );
 }

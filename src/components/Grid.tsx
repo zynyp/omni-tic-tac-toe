@@ -16,7 +16,7 @@ const placeHowler = new Howl({
 placeHowler.load();
 
 export default function Grid(props: GridProps) {
-    const { tiles, currentTurn, credits, allowPlacing, onPlace = () => {} } = props;
+    const { tiles, tileCount, currentTurn, credits, allowPlacing, onPlace = () => {} } = props;
 
     return (
         <div class="grid place-items-center p-4 w-full h-full">
@@ -26,7 +26,7 @@ export default function Grid(props: GridProps) {
                             {(_, y) => (
                                 <tr class="flex flex-row">
                                     <For each={Array(GRID_WIDTH)}>
-                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
+                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} tileCount={tileCount} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
                                     </For>
                                 </tr>
                             )}
@@ -40,6 +40,8 @@ export default function Grid(props: GridProps) {
 
 export interface GridProps {
     tiles: Accessor<TileType[][]>;
+    tileCount: Accessor<Record<TileType, number>>;
+
     currentTurn: Accessor<TileType>;
 
     allowPlacing: Accessor<boolean>;
