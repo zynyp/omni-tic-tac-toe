@@ -453,7 +453,7 @@ export default function Game() {
                 <Grid tiles={currentTiles} tileCount={tileCount} selectedTile={selectedTile} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} onPlace={onGridPlace} />
             </section>
 
-            <section ref={info} class={`flex flex-col justify-end md:justify-center items-center pt-2 md:mr-40 md:w-120 ${hasNotPlayed() ? "gap-4" : "gap-2 md:gap-6 h-mdlg:gap-8"}`}>
+            <section ref={info} class={`flex flex-col justify-end md:justify-center items-center pt-2 md:mr-20 lg:mr-40 md:w-120 ${hasNotPlayed() ? "gap-4" : "gap-2 md:gap-6 h-mdlg:gap-8"}`}>
                 {
                     hasNotPlayed()
                     ? (
