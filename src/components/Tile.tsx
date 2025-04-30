@@ -63,4 +63,3 @@ export interface TileProps {
 
     isHidden?: boolean;
 }
-

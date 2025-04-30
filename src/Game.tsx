@@ -1,7 +1,7 @@
 import { createMemo, createSignal, For, onCleanup, onMount, type Signal } from "solid-js";
 import { animate } from "animejs";
 
-import { Dice, Grid, GRID_HEIGHT, GRID_WIDTH, MAX_TILES, WinScreen } from "./components";
+import { Dice, Grid, GRID_HEIGHT, GRID_MATCHES, GRID_WIDTH, MAX_TILES, WinScreen } from "./components";
 import { Tile, TileNames, TileSources, type Turn } from "./types";
 
 export default function Game() {
@@ -110,7 +110,7 @@ export default function Game() {
                 },
             });
 
-            endTurn();
+            restartGame();
             window.removeEventListener("click", onWindowClick);
         }
 
@@ -118,6 +118,47 @@ export default function Game() {
     });
 
     onCleanup(() => cleanupController.abort());
+
+    function restartGame() {
+        if (rollDice()) return;
+        setAllowPlacing(false);
+
+        for (const tile in tiles) tiles[+tile as Tile][1]([]);
+
+        setCurrentTurn(Tile.Circle);
+        setTurnHistory([]);
+        setTurnActionIdx(-1);
+
+        setRollDice(true);
+        setDiceRollSteps(0);
+    }
+
+    function endTurn() {
+        if (rollDice()) return;
+        setAllowPlacing(false);
+
+        let coordsAdded: [number, number][] = [];
+        for (const { tile, x, y } of [...turnHistory().slice(0, turnActionIdx() + 1)].reverse()) !coordsAdded.some(([tileX, tileY]) => tileX === x && tileY === y) && tiles[tile][1]([...tiles[tile][0](), [x, y]]) && coordsAdded.push([x, y]);
+
+        setTurnHistory([]);
+        setTurnActionIdx(-1);
+
+        for (const tile of [Tile.Circle, Tile.Cross]) {
+            const coords = [...tiles[tile][0]()];
+            if (coords.length < 1) continue;
+
+            // check if there are any valid matches
+            if (GRID_MATCHES.some((match) => match.every(([x, y]) => coords.some(([coordsX, coordsY]) => coordsX === x && coordsY === y)))) {
+                setWinner(tile);
+                return;
+            } 
+        }
+
+        setCurrentTurn(currentTurn() === Tile.Circle ? Tile.Cross : Tile.Circle);
+
+        setRollDice(true);
+        setDiceRollSteps(0);
+    }
 
     function getTile(tileX: number, tileY: number): Tile {
         for (const tileType in tiles) {
@@ -128,25 +169,6 @@ export default function Game() {
         }
 
         return Tile.None;
-    }
-
-    function endTurn() {
-        if (rollDice()) return;
-        setAllowPlacing(false);
-
-        setCurrentTurn(currentTurn() === Tile.Circle ? Tile.Cross : Tile.Circle);
-        
-        let coordsAdded: [number, number][] = [];
-        for (const { tile, x, y } of [...turnHistory()].reverse()) !coordsAdded.some(([tileX, tileY]) => tileX === x && tileY === y) && tiles[tile][1]([...tiles[tile][0](), [x, y]]) && coordsAdded.push([x, y]);
-
-        setTurnHistory([]);
-        setTurnActionIdx(-1);
-
-        // TODO: validate and check tiles
-        if (true) {}
-
-        setRollDice(true);
-        setDiceRollSteps(0);
     }
 
     function updateTurnActionIdx(turnActionIdx: number) {
@@ -161,6 +183,7 @@ export default function Game() {
     function onGridPlace(x: number, y: number) {
         if (!allowPlacing()) return;
         
+        // if the tile is empty when starting the turn
         if (getTile(x, y) === Tile.None) {
             let tile = Tile.None;
             let creditChange: number = 0;
@@ -194,7 +217,15 @@ export default function Game() {
 
             setTurnHistory([...turnHistory().slice(0, turnActionIdx() + 1), turn]);
             setTurnActionIdx(turnActionIdx() + 1);
+
+            return;
         }
+
+        if (selectedTile() !== null) {
+
+        }
+        
+        setSelectedTile([x, y]);
     }
 
     function onDiceRollEnd(face: number) {
@@ -251,7 +282,7 @@ export default function Game() {
                 }
             </section>
 
-            {winner() !== Tile.None && <WinScreen winnerSignal={winnerSignal} />}
+            {winner() !== Tile.None && <WinScreen winnerSignal={winnerSignal} onRestart={restartGame} />}
         </>
     );
 }
