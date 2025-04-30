@@ -17,7 +17,12 @@ stepHowler.load();
 rollHowler.load();
 
 export default function Dice(props: DiceProps) {
-    const { doRoll, onRollEnd: endRoll = () => {} } = props;
+    const {
+        doRoll,
+        
+        onRollStep: stepRoll = () => {},
+        onRollEnd: endRoll = () => {}
+    } = props;
 
     let dice!: HTMLImageElement;
     let shadow!: HTMLImageElement;
@@ -65,6 +70,8 @@ export default function Dice(props: DiceProps) {
 
             onLoop() {
                 updateFace();
+                stepRoll();
+                
                 stepHowler.play();
             }
         });
@@ -117,5 +124,7 @@ export default function Dice(props: DiceProps) {
 
 export interface DiceProps {
     doRoll: Accessor<boolean>;
+
+    onRollStep?: () => any;
     onRollEnd?: (face: number) => any;
 }

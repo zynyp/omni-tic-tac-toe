@@ -1,9 +1,12 @@
-import { For, type Signal } from "solid-js";
+import { For, type Accessor } from "solid-js";
 import { Howl } from "howler";
 
 import { Tile as TileType } from "../types";
 
 import Tile from "./Tile";
+
+export const GRID_WIDTH: number = 5;
+export const GRID_HEIGHT: number = 5;
 
 const placeHowler = new Howl({
     src: "sounds/place.mp3",
@@ -13,29 +16,34 @@ const placeHowler = new Howl({
 placeHowler.load();
 
 export default function Grid(props: GridProps) {
-    const { tiles, onPlace = () => {} } = props;
+    const { tiles, currentTurn, credits, allowPlacing, onPlace = () => {} } = props;
 
     return (
-        <div class="p-4 w-full h-full justify-items-center content-center">
-            <div class="relative w-full h-full max-w-100 max-h-100">
-                <img class="absolute top-0 left-0 pointer-events-none" src="images/grid.svg" alt="Tile Grid" width={400} draggable="false" role="presentation" aria-hidden="true" />
+        <div class="grid place-items-center p-4 w-full h-full">
+            <div class="relative w-full not-h-md:max-w-60 not-h-md:md:max-w-80 not-h-md:lg:max-w-100 h-full not-md:max-h-60 not-md:h-md:max-h-80 not-md:h-lg:max-h-100">
                 <table class="flex flex-col justify-center">
-                        <For each={Array(5)}>
+                        <For each={Array(GRID_HEIGHT)}>
                             {(_, y) => (
                                 <tr class="flex flex-row">
-                                    <For each={Array(5)}>
-                                        {(_, x) => <Tile tile={tiles[y()][x()][0]} isHidden={(x() === 0 || x() === 4) && (y() === 0 || y() === 4)} onclick={() => onPlace(x(), y())} />}
+                                    <For each={Array(GRID_WIDTH)}>
+                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
                                     </For>
                                 </tr>
                             )}
-                        </For>                
+                        </For>
                 </table>
+                <img class="absolute top-0 left-0 -z-10 pointer-events-none" src="images/grid.svg" alt="Tile Grid" width={400} draggable="false" role="presentation" aria-hidden="true" />
             </div>
         </div>
     );
 }
 
 export interface GridProps {
-    tiles: Signal<TileType>[][];
+    tiles: Accessor<TileType[][]>;
+    currentTurn: Accessor<TileType>;
+
+    allowPlacing: Accessor<boolean>;
+    credits: Accessor<number>;
+
     onPlace?: (x: number, y: number) => any;
 }

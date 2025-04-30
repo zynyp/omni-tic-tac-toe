@@ -5,3 +5,19 @@ body {
     width: 100%;
     height: 100%;
 }
+
+@custom-variant h-sm { @media (height >= 40rem) { & { @slot; } } }
+@custom-variant h-smmd { @media (height >= 44rem) { & { @slot; } } }
+@custom-variant h-md { @media (height >= 48rem) { & { @slot; } } }
+@custom-variant h-mdlg { @media (height >= 56rem) { & { @slot; } } }
+@custom-variant h-lg { @media (height >= 64rem) { & { @slot; } } }
+@custom-variant h-xl { @media (height >= 80rem) { & { @slot; } } }
+@custom-variant h-2xl { @media (height >= 96rem) { & { @slot; } } }
+
+/* @theme {
+    --breakpoint-h-sm: (height > 40rem);
+    --breakpoint-h-md: (height > 48rem);
+    --breakpoint-h-lg: (height > 64rem);
+    --breakpoint-h-xl: (height > 80rem);
+    --breakpoint-h-2xl: (height > 96rem);
+} */
