@@ -8,7 +8,7 @@ export enum Tile {
 }
 
 export const TileNames: Record<Tile, string> = {
-    [Tile.None]: "Nil",
+    [Tile.None]: "Empty",
 
     [Tile.Circle]: "Circle",
     [Tile.Cross]: "Cross",

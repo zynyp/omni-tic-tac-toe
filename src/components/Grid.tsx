@@ -16,7 +16,15 @@ const placeHowler = new Howl({
 placeHowler.load();
 
 export default function Grid(props: GridProps) {
-    const { tiles, tileCount, currentTurn, credits, allowPlacing, onPlace = () => {} } = props;
+    const { tiles, tileCount, selectedTile, currentTurn, credits, allowPlacing, onPlace = () => {} } = props;
+
+    function isSelected(x: number, y: number) {
+        const isNotSelected = selectedTile() === null;
+        if (isNotSelected) return false;
+        
+        const [selectedX, selectedY] = selectedTile()!;
+        return selectedX === x && selectedY === y;
+    }
 
     return (
         <div class="grid place-items-center p-4 w-full h-full">
@@ -26,7 +34,7 @@ export default function Grid(props: GridProps) {
                             {(_, y) => (
                                 <tr class="flex flex-row">
                                     <For each={Array(GRID_WIDTH)}>
-                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} tileCount={tileCount} currentTurn={currentTurn} credits={credits} allowPlacing={allowPlacing} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
+                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} tileCount={tileCount} currentTurn={currentTurn} credits={credits} allowPlacing={() => allowPlacing() && selectedTile() === null} isSelected={() => isSelected(x(), y())} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
                                     </For>
                                 </tr>
                             )}
@@ -41,6 +49,7 @@ export default function Grid(props: GridProps) {
 export interface GridProps {
     tiles: Accessor<TileType[][]>;
     tileCount: Accessor<Record<TileType, number>>;
+    selectedTile: Accessor<[number, number] | null>;
 
     currentTurn: Accessor<TileType>;
 
@@ -95,4 +104,4 @@ export const GRID_MATCHES: [[number, number], [number, number], [number, number]
     [[3, 2], [3, 3], [3, 4]],
     [[1, 2], [2, 3], [3, 4]],
     [[3, 2], [2, 3], [1, 4]]
-]
+];
