@@ -15,6 +15,7 @@ Before each player starts their turn, the player will first roll a dice between 
 Once the dice has been rolled, the player can perform a number of actions, which cost them a different number of credits, namely:
 
 | Action | Cost |
+| ------ | ---- |
 | Place/Move a tile of their own | 2 |
 | Remove an opponent's tile | 3 |
 | Place/Move a defending tile | 1 |
