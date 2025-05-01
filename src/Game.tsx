@@ -50,6 +50,9 @@ export default function Game() {
     const winnerSignal = createSignal(Tile.None);
     const [winner, setWinner] = winnerSignal;
 
+    const showWinScreenSignal = createSignal(false);
+    const [showWinScreen, setShowWinScreen] = showWinScreenSignal;
+
     const [rollDice, setRollDice] = createSignal(false);
     const [diceRollSteps, setDiceRollSteps] = createSignal(0);
 
@@ -85,8 +88,38 @@ export default function Game() {
 
         window.addEventListener("click", onWindowClick, cleanupController);
         function onWindowClick({ target }: MouseEvent) {
-            if (target instanceof HTMLAnchorElement) return;
+            !(target instanceof HTMLAnchorElement) && startGame();
+        }
 
+        window.addEventListener("keydown", ({ code }) => {
+            switch (code) {
+                case "KeyZ": {
+                    updateTurnActionIdx(turnActionIdx() - 1);
+                    break;
+                }
+
+                case "KeyX": {
+                    updateTurnActionIdx(turnActionIdx() + 1);
+                    break;
+                }
+
+                case "Space": {
+                    showWinScreen()
+                        ? hasNotPlayed()
+                            ? startGame()
+                            : restartGame()
+                        : endTurn();
+
+                    break;
+                }
+            }
+        }, cleanupController);
+
+        window.addEventListener("resize", () => {
+            if (!hasNotPlayed()) currentTurnText.style.height = isOnLargeScreen() ? "2rem" : "1.5rem"
+        }, cleanupController);
+
+        function startGame() {
             animate(info, {
                 opacity: {
                     to: 0.0,
@@ -118,27 +151,6 @@ export default function Game() {
             restartGame();
             window.removeEventListener("click", onWindowClick);
         }
-
-        window.addEventListener("keydown", ({ code }) => {
-            switch (code) {
-                case "KeyZ": {
-                    updateTurnActionIdx(turnActionIdx() - 1);
-                    break;
-                }
-
-                case "KeyX": {
-                    updateTurnActionIdx(turnActionIdx() + 1);
-                    break;
-                }
-
-                case "Space": {
-                    endTurn();
-                    break;
-                }
-            }
-        }, cleanupController);
-
-        window.addEventListener("resize", () => currentTurnText.style.height = isOnLargeScreen() ? "2rem" : "1.5rem", cleanupController);
     });
 
     onCleanup(() => cleanupController.abort());
@@ -176,15 +188,19 @@ export default function Game() {
         setTurnHistory([]);
         setTurnActionIdx(-1);
 
+        setSelectedTile(null);
+
         for (const tile of [Tile.Circle, Tile.Cross]) {
             const coords = [...tiles[tile][0]()];
             if (coords.length < 1) continue;
 
             // check if there are any valid matches
             if (GRID_MATCHES.some((match) => match.every(([x, y]) => coords.some(([coordsX, coordsY]) => coordsX === x && coordsY === y)))) {
+                setShowWinScreen(true);
                 setWinner(tile);
+
                 return;
-            } 
+            }
         }
 
         setCurrentTurn(currentTurn() === Tile.Circle ? Tile.Cross : Tile.Circle);
@@ -194,6 +210,11 @@ export default function Game() {
     }
 
     function getTile(tileX: number, tileY: number): Tile {
+        for (const { tile, x, y, isActual } of turnHistory().slice(0, turnActionIdx() + 1)) if (isActual && x === tileX && y === tileY) return tile;
+        return getOriginalTile(tileX, tileY);
+    }
+
+    function getOriginalTile(tileX: number, tileY: number): Tile {
         for (const tileType in tiles) {
             const tile = +tileType as Tile;
 
@@ -208,9 +229,7 @@ export default function Game() {
         newTurnActionIdx = Math.max(-1, Math.min(newTurnActionIdx, turnHistory().length - 1));
         
         const prevTurnActionIdx = turnActionIdx();
-        if (newTurnActionIdx < prevTurnActionIdx && prevTurnActionIdx > 1) {
-            if (turnHistory()[newTurnActionIdx].credits === 0) newTurnActionIdx--; else if (turnHistory()[newTurnActionIdx + 1].credits === 0) newTurnActionIdx++;
-        }
+        if (newTurnActionIdx < prevTurnActionIdx && turnHistory()[newTurnActionIdx + 1]?.credits === 0) newTurnActionIdx--; else if (turnHistory()[newTurnActionIdx + 1]?.credits === 0) newTurnActionIdx++;
 
         setTurnActionIdx(newTurnActionIdx);
 
@@ -367,7 +386,14 @@ export default function Game() {
                 return;
             }
 
-            const turn: GameTurn = { tile, x, y, credits: creditChange };
+            const turn: GameTurn = {
+                tile,
+                
+                x,
+                y,
+                
+                credits: creditChange, isActual: false
+            }
 
             setTurnHistory([...turnHistory().slice(0, turnActionIdx() + 1), turn]);
             setTurnActionIdx(turnActionIdx() + 1);
@@ -379,10 +405,11 @@ export default function Game() {
 
         // when there is a tile selected
         if (selectedTile() !== null) {
-            if (currentTile === Tile.None) {
-                const [selectedX, selectedY] = selectedTile()!;
-
-                const creditChange = -2 + +(getTile(selectedX, selectedY) === Tile.Defender);
+            const [selectedX, selectedY] = selectedTile()!;
+            const selectedTileType = getTile(selectedX, selectedY);
+            
+            if (getOriginalTile(x, y) === Tile.None) {
+                const creditChange = -2 + +(selectedTileType === Tile.Defender);
                 const turns: GameTurn[] = [
                     {
                         tile: Tile.None,
@@ -390,39 +417,42 @@ export default function Game() {
                         x: selectedX,
                         y: selectedY,
 
-                        credits: creditChange
+                        credits: creditChange,
+                        isActual: true
                     },
                     {
-                        tile: getTile(selectedX, selectedY),
+                        tile: selectedTileType,
 
                         x,
                         y,
 
-                        credits: 0
+                        credits: 0,
+                        isActual: true
                     }
                 ];
 
                 setCredits(credits() + creditChange);
 
-                // TODO: restrict with direct setting of tiles.
-
                 setTurnHistory([...turnHistory().slice(0, turnActionIdx() + 1), ...turns]);
                 setTurnActionIdx(turnActionIdx() + 2);
             }
-            
+
             setSelectedTile(null);
             return;
         }
 
         // if tile is an opponent tile
-        if (currentTile !== currentTurn() && currentTile !== Tile.Defender && credits() >= 3) {
+        if (currentTile !== currentTurn() && currentTile !== Tile.Defender) {
+            if (credits() < 3) return;
+            
             const turn: GameTurn = {
                 tile: Tile.None,
 
                 x,
                 y,
                 
-                credits: -3
+                credits: -3,
+                isActual: true
             };
 
             setCredits(credits() - 3);
@@ -471,13 +501,13 @@ export default function Game() {
                         <>
                             <section class="flex relative flex-row md:order-1 gap-2 justify-center">
                                 <kbd ref={keyZ} class="absolute top-1/2 left-0 -z-10 brightness-80 opacity-0 -translate-y-1/2">
-                                    <img src="images/keys/z.svg" alt="Spacebar" width={24} />
+                                    <img src="images/keys/z.svg" alt="Spacebar" width={24} draggable={false} tabindex={-1} />
                                 </kbd>
-                                <img class={`transition-[margin,_width] duration-200 ${turnActionIdx() >= 0 ? "not-hover:m-1 hover:w-11" : "m-1 opacity-60"}`} src="images/undo-arrow.svg" alt="Undo" width={36} draggable="false" tabIndex={-(turnActionIdx() < 0)} role="button" aria-disabled={turnActionIdx() < 0} onclick={() => updateTurnActionIdx(turnActionIdx() - 1)} onpointerenter={() => animateKeyIn(AnimatedKey.Z)} onpointerleave={() => animateKeyOut(AnimatedKey.Z)} />
+                                <img class={`outline-none transition-[margin,_width] duration-200 ${turnActionIdx() >= 0 ? "not-hover:m-1 hover:w-11 focus:w-11" : "m-1 opacity-60"}`} src="images/undo-arrow.svg" alt="Undo" width={36} draggable={false} tabIndex={-(turnActionIdx() < 0)} role="button" aria-disabled={turnActionIdx() < 0} onclick={() => updateTurnActionIdx(turnActionIdx() - 1)} onpointerenter={() => animateKeyIn(AnimatedKey.Z)} onpointerleave={() => animateKeyOut(AnimatedKey.Z)} />
                                 
-                                <img class={`transition-[margin,_width] duration-200 ${turnActionIdx() < turnHistory().length - 1 ? "not-hover:m-1 hover:w-11" : "m-1 opacity-60"}`} src="images/redo-arrow.svg" alt="Redo" width={36} draggable="false" tabIndex={-(turnActionIdx() >= turnHistory().length - 1)} role="button" aria-disabled={turnActionIdx() >= turnHistory().length - 1} onclick={() => updateTurnActionIdx(turnActionIdx() + 1)} onpointerenter={() => animateKeyIn(AnimatedKey.X)} onpointerleave={() => animateKeyOut(AnimatedKey.X)} />
+                                <img class={`outline-none transition-[margin,_width] duration-200 ${turnActionIdx() < turnHistory().length - 1 ? "not-hover:m-1 hover:w-11 focus:w-11" : "m-1 opacity-60"}`} src="images/redo-arrow.svg" alt="Redo" width={36} draggable={false} tabIndex={-(turnActionIdx() >= turnHistory().length - 1)} role="button" aria-disabled={turnActionIdx() >= turnHistory().length - 1} onclick={() => updateTurnActionIdx(turnActionIdx() + 1)} onpointerenter={() => animateKeyIn(AnimatedKey.X)} onpointerleave={() => animateKeyOut(AnimatedKey.X)} />
                                 <kbd ref={keyX} class="absolute top-1/2 right-0 -z-10 brightness-80 opacity-0 -translate-y-1/2">
-                                    <img src="images/keys/x.svg" alt="Spacebar" width={24} />
+                                    <img src="images/keys/x.svg" alt="Spacebar" width={24} draggable={false} tabindex={-1} />
                                 </kbd>
                             </section>
                             
@@ -488,9 +518,9 @@ export default function Game() {
                                         <p class="text-lg font-semibold">{rollDice() ? ".".repeat(diceRollSteps()) : credits()}</p>
                                     </div>
 
-                                    <button class={`w-40 h-14 text-xl font-bold text-white rounded-full outline-none focus:ring-2 ring-offset-2 hover:brightness-90 transition duration-200 ${rollDice() ? "bg-neutral-500 ring-neutral-500" : "bg-blue-500 ring-blue-500"}`} disabled={rollDice()} tabIndex={-rollDice()} onclick={endTurn} onpointerup={({ target }) => (target as HTMLButtonElement).blur()} onpointerenter={() => animateKeyIn(AnimatedKey.Spacebar)} onpointerleave={() => animateKeyOut(AnimatedKey.Spacebar)}>End Turn</button>
+                                    <button class={`w-40 h-14 text-xl font-bold text-white rounded-full outline-none focus:ring-2 ring-offset-2 hover:brightness-90 transition duration-200 ${rollDice() || winner() !== Tile.None ? "bg-neutral-500 ring-neutral-500" : "bg-blue-500 ring-blue-500"}`} disabled={rollDice() || winner() !== Tile.None} tabIndex={-(rollDice() || winner() !== Tile.None)} onclick={endTurn} onpointerup={({ target }) => (target as HTMLButtonElement).blur()} onpointerenter={() => animateKeyIn(AnimatedKey.Spacebar)} onpointerleave={() => animateKeyOut(AnimatedKey.Spacebar)}>End Turn</button>
                                     <kbd ref={spaceBar} class="absolute bottom-0 left-1/2 -z-10 brightness-80 opacity-0 -translate-x-1/2">
-                                        <img src="images/keys/spacebar.svg" alt="Spacebar" width={40} />
+                                        <img src="images/keys/spacebar.svg" alt="Spacebar" width={40} draggable={false} tabindex={-1} />
                                     </kbd>
                                 </section>
 
@@ -501,12 +531,16 @@ export default function Game() {
                 }
             </section>
 
-            {winner() !== Tile.None && <WinScreen winnerSignal={winnerSignal} onRestart={restartGame} />}
+            {winner() !== Tile.None && <WinScreen winnerSignal={winnerSignal} isShowingSignal={showWinScreenSignal} onRestart={restartGame} />}
         </>
     );
 }
 
-interface GameTurn extends Turn { credits: number; }
+interface GameTurn extends Turn {
+    credits: number;
+    isActual: boolean;
+}
+
 enum AnimatedKey {
     Z,
     X,

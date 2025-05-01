@@ -1,4 +1,4 @@
-import { For, type Accessor } from "solid-js";
+import { createMemo, For, type Accessor } from "solid-js";
 import { Howl } from "howler";
 
 import { Tile as TileType } from "../types";
@@ -26,6 +26,13 @@ export default function Grid(props: GridProps) {
         return selectedX === x && selectedY === y;
     }
 
+    const selectedTileType = createMemo(() => {
+        if (selectedTile() === null) return null;
+        const [selectedX, selectedY] = selectedTile()!;
+
+        return tiles()[selectedY][selectedX];
+    });
+
     return (
         <div class="grid place-items-center p-4 w-full h-full">
             <div class="relative w-full not-h-md:max-w-60 not-h-md:md:max-w-80 not-h-md:lg:max-w-100 h-full not-md:max-h-60 not-md:h-md:max-h-80 not-md:h-lg:max-h-100">
@@ -34,13 +41,13 @@ export default function Grid(props: GridProps) {
                             {(_, y) => (
                                 <tr class="flex flex-row">
                                     <For each={Array(GRID_WIDTH)}>
-                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} tileCount={tileCount} currentTurn={currentTurn} credits={credits} allowPlacing={() => allowPlacing() && selectedTile() === null} isSelected={() => isSelected(x(), y())} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
+                                        {(_, x) => <Tile tile={() => tiles()[y()][x()]} tileCount={tileCount} selectedTile={selectedTileType} currentTurn={currentTurn} credits={credits} allowPlacing={() => allowPlacing() && selectedTile() === null} isSelected={() => isSelected(x(), y())} isHidden={(x() === 0 || x() === GRID_WIDTH - 1) && (y() === 0 || y() === GRID_HEIGHT - 1)} onclick={() => onPlace(x(), y())} />}
                                     </For>
                                 </tr>
                             )}
                         </For>
                 </table>
-                <img class="absolute top-0 left-0 -z-10 pointer-events-none" src="images/grid.svg" alt="Tile Grid" width={400} draggable="false" role="presentation" aria-hidden="true" />
+                <img class="absolute top-0 left-0 -z-10 pointer-events-none" src="images/grid.svg" alt="Tile Grid" width={400} draggable={false} role="presentation" aria-hidden="true" />
             </div>
         </div>
     );

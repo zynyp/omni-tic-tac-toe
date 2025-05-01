@@ -108,16 +108,16 @@ export default function Dice(props: DiceProps) {
 
         function updateFace() {
             let prevFace = face();
-            do setFace(Math.random() * 4 + 1 | 0); while (face() === prevFace);
+            do setFace(Math.random() * 3 + 1 | 0); while (face() === prevFace);
         }
     }
 
     return (
         <section class="flex flex-col items-center w-20 h-36" role="button">
-            <img ref={dice} class="w-16" src={`images/dices/${face()}.svg`} alt={`Dice Face ${face()}`} width={64} draggable="false" />
-            <img ref={shadow} class="-z-10 opacity-80 origin-center -translate-y-3" src="images/dice-shadow.svg" alt="" width={68} draggable="false" role="presentation" aria-hidden="true" />
+            <img ref={dice} class="w-16" src={`images/dices/${face()}.svg`} alt={`Dice Face ${face()}`} width={64} draggable={false} />
+            <img ref={shadow} class="-z-10 opacity-80 origin-center -translate-y-3" src="images/dice-shadow.svg" alt="" width={68} draggable={false} role="presentation" aria-hidden="true" />
 
-            <img class="-z-20 w-full origin-center -translate-y-12" src="images/dice-pillar.svg" alt="Dice Pillar" width={80} draggable="false" role="presentation" aria-hidden="true" />
+            <img class="-z-20 w-full origin-center -translate-y-12" src="images/dice-pillar.svg" alt="Dice Pillar" width={80} draggable={false} role="presentation" aria-hidden="true" />
         </section>
     );
 }

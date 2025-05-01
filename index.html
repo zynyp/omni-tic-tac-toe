@@ -4,6 +4,23 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+        <meta name="application" content="Omni Tic-Tac-Toe">
+        <meta name="description" content="A strategy-chance-based spinoff of the popular game Tic-Tac-Toe">
+
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="apple-touch-icon" href="favicon.png">
+
+        <meta property="og:title" content="Omni Tic-Tac-Toe">
+        <meta property="og:description" content="A strategy-chance-based spinoff of the popular game Tic-Tac-Toe">
+        <meta property="og:url" content="https://zynyp-omnittt.netlify.app/">
+        <meta property="og:type" content="website">
+        <meta property="og:image" content="https://zynyp-omnittt.netlify.app/favicon.ico">
+
+        <meta name="twitter:title" content="Omni Tic-Tac-Toe">
+        <meta name="twitter:description" content="A strategy-chance-based spinoff of the popular game Tic-Tac-Toe">
+        <meta name="twitter:image" content="https://zynyp-omnittt.netlify.app/favicon.ico">
+        <meta name="twitter:card" content="summary_large_image">
+
         <title>Omni Tic-Tac-Toe</title>
     </head>
     <body class="flex flex-col">
@@ -14,9 +31,13 @@
 
         <main id="game" class="flex flex-col md:flex-row justify-between items-center md:px-2 pt-4 md:pt-8 pb-6 w-full h-full select-none"></main>
 
-        <footer class="flex flex-row gap-2 md:gap-6 justify-center mt-2 h-mdlg:mt-8 mb-2 w-full text-center">
-            <p>Created by Zong Yang and Triston</p>
-            <a class="text-blue-500 hover:underline rounded-xl outline-none focus:ring-2 ring-blue-500 ring-offset-2" href="https://github.com/zy-nyp/omni-tic-tac-toe" target="_blank">View Repository</a>
+        <footer class="flex flex-col items-center">
+            <a class="text-md hover:text-lg focus:text-lg text-neutral-500 hover:text-neutral-700 focus:text-neutral-700 leading-6 align-middle outline-none transition-[font-size,_color] duration-200" href="https://github.com/zynyp/omni-tic-tac-toe/blob/main/README.md#How_to_play_Omni_Tic-Tac-Toe%3F" target="_blank">Read Rules</a>
+            
+            <section class="flex flex-row gap-2 md:gap-6 justify-center mt-2 h-mdlg:mt-8 mb-2 w-full text-center">
+                <p>Created by Zong Yang and Triston</p>
+                <a class="text-blue-500 hover:underline rounded-xl outline-none focus:ring-2 ring-blue-500 ring-offset-2" href="https://github.com/zynyp/omni-tic-tac-toe" target="_blank">View Repository</a>
+            </section>
         </footer>
 
         <script type="module" src="src/index.tsx"></script>
